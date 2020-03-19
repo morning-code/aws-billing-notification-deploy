@@ -1,0 +1,111 @@
+{
+  "Resources": {
+    "lambdaServiceRole494E4CA6": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "morning-code-aws-billing-notification-stack/lambda/ServiceRole/Resource"
+      }
+    },
+    "lambda8B5974B5": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "morning-code-aws-billing-notification",
+          "S3Key": "aws-billing-notification-0.0.1-SNAPSHOT.jar"
+        },
+        "Handler": "io.code.morning.AwsBillingNotification::handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "lambdaServiceRole494E4CA6",
+            "Arn"
+          ]
+        },
+        "Runtime": "java11",
+        "Environment": {
+          "Variables": {
+            "SLACK_WEBHOOK_URL": ""
+          }
+        },
+        "FunctionName": "aws-billing-notificaion",
+        "Timeout": 30
+      },
+      "DependsOn": [
+        "lambdaServiceRole494E4CA6"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "morning-code-aws-billing-notification-stack/lambda/Resource"
+      }
+    },
+    "lambdaAllowEventRulemorningcodeawsbillingnotificationstackrule9B01A0797FAF1FA9": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambda8B5974B5",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "ruleF2C1DCDC",
+            "Arn"
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "morning-code-aws-billing-notification-stack/lambda/AllowEventRulemorningcodeawsbillingnotificationstackrule9B01A079"
+      }
+    },
+    "ruleF2C1DCDC": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 8 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "lambda8B5974B5",
+                "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "morning-code-aws-billing-notification-stack/rule/Resource"
+      }
+    }
+  }
+}
